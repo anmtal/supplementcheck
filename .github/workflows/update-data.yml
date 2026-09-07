@@ -1,0 +1,53 @@
+name: Refresh FDA data
+
+# Rebuilds the site from the latest openFDA recall data.
+# Two triggers:
+#   1. schedule  — GitHub's own cron (FALLBACK; GitHub can delay/skip these).
+#   2. workflow_dispatch — manual, and the endpoint an external cron (e.g. cron-job.org)
+#      calls for reliable timing. This is the PRIMARY path.
+#
+# NOTE: GitHub cron is UTC. '0 22 * * 5' = Fridays 22:00 UTC.
+#   Adjust the hour for your timezone, e.g. US Eastern Fri 6pm = 22:00 UTC (23:00 in winter),
+#   India Fri 8pm IST = 14:30 UTC ('30 14 * * 5'). The external cron can set local time directly.
+
+on:
+  schedule:
+    - cron: '0 22 * * 5'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: refresh-data
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Fetch latest openFDA data and rebuild
+        run: |
+          node fetch-data.js
+          node build.js
+
+      - name: Commit and push if data changed
+        run: |
+          git config user.name "supplementcheck-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No data changes this run."
+          else
+            git commit -m "chore: weekly openFDA data refresh [skip ci]"
+            git push
+            echo "Pushed refreshed data; GitHub Pages will redeploy."
+          fi
