@@ -1,0 +1,14 @@
+{
+  "name": "supplementcheck",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Look up any dietary supplement's FDA recall and safety record. A static, SEO-optimized site generated from official openFDA enforcement data.",
+  "scripts": {
+    "fetch": "node fetch-data.js",
+    "build": "node build.js",
+    "rebuild": "node fetch-data.js && node build.js",
+    "dev": "node build.js && npx --yes serve docs"
+  },
+  "license": "MIT",
+  "engines": { "node": ">=18" }
+}

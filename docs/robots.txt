@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://anmtal.github.io/supplementcheck/sitemap.xml
