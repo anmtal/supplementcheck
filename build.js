@@ -8,7 +8,9 @@ const ROOT = __dirname;
 const DOCS = path.join(ROOT, "docs");
 const DATA = path.join(ROOT, "data", "raw");
 
-const CFG = { name: "SupplementCheck", origin: "https://anmtal.github.io", base: "/supplementcheck" };
+const CFG = { name: "SupplementCheck", origin: "https://anmtal.github.io", base: "/supplementcheck", newsletter: "" };
+// CFG.newsletter: paste your email provider's form POST action URL to activate signups,
+// e.g. Kit/ConvertKit: https://app.kit.com/forms/<FORM_ID>/subscriptions — then rebuild.
 const SITE = CFG.origin + CFG.base;        // absolute site root
 const BP = CFG.base;                        // path prefix for internal links
 const BUILD = new Date().toISOString().slice(0, 10);
@@ -201,6 +203,7 @@ function foot() {
   <div><h4>About</h4>
     <a href="${url("/about/")}">About</a>
     <a href="${url("/methodology/")}">Methodology & data</a>
+    <a href="${url("/privacy/")}">Privacy policy</a>
     <a href="https://open.fda.gov/" rel="noopener">openFDA data</a>
     <a href="https://www.fda.gov/safety/recalls-market-withdrawals-safety-alerts" rel="noopener nofollow">FDA recalls</a>
   </div>
@@ -209,6 +212,11 @@ function foot() {
 </body></html>`;
 }
 function page(opts, body) { const inner = opts.full ? body : `<div class="wrap">${body}</div>`; return head(opts) + inner + foot(); }
+function newsletterForm() {
+  return CFG.newsletter
+    ? `<form class="emailrow" action="${CFG.newsletter}" method="post" target="_blank"><input type="email" name="email_address" placeholder="you@email.com" aria-label="Email for recall alerts" required><button class="btn" type="submit">Get alerts</button></form>`
+    : `<form class="emailrow" onsubmit="return false"><input type="email" placeholder="you@email.com" aria-label="Email for recall alerts"><button class="btn" type="submit">Get alerts</button></form><p class="faint" style="font-size:.72rem;margin-top:.4rem">Alerts activate once the email provider is connected.</p>`;
+}
 
 /* ---------------- write util ---------------- */
 function write(rel, content) {
@@ -293,10 +301,9 @@ function productPage(it) {
     <div class="alt"><div class="ai" aria-hidden="true">✅</div><div><div class="an">USP Verified alternative <span class="badge clean">USP</span></div><div class="am">Full label transparency · third-party assay on file</div></div><span class="spacer" style="flex:1"></span><a class="btn ghost" href="#" rel="nofollow sponsored">View →</a></div>
   </div>
   <div class="block"><h3>Test what you already own <span class="spon">Sponsored</span></h3><p class="sub">Mail-in kits screen supplements for lead, arsenic, cadmium and mercury.</p><a class="btn full" href="#" rel="nofollow sponsored">Get an at-home heavy-metal test kit →</a></div>
-  <div class="block"><h3>🔔 Get an alert if this is recalled again</h3><p class="sub">We’ll email you when the FDA flags anything you’ve searched.</p><form class="emailrow" onsubmit="return false"><input type="email" placeholder="you@email.com" aria-label="Email for recall alerts"><button class="btn" type="submit">Notify me</button></form></div>
+  <div class="block"><h3>🔔 Get new FDA recall alerts</h3><p class="sub">We email you when the FDA flags new supplement recalls. Free — unsubscribe anytime.</p>${newsletterForm()}</div>
   <div class="block"><h3>Frequently asked</h3>${faqs.map((f) => `<div class="faqq">${esc(f.q)}</div><div class="faqa">${esc(f.a)}</div>`).join("")}</div>
 </article>
-<div class="adslot" style="margin-top:16px">ADVERTISEMENT · display ad slot</div>
 <div class="srcbar mono"><span>SOURCE ↗</span><span>openFDA ${esc(it.source)}/enforcement</span><span>Recall ${esc(it.recall_number)}</span><span>Reported ${esc(it.reported.human)}</span></div>
 </section>
 ${related.length ? `<section><h2 class="h-md" style="margin-bottom:.8rem">More ${esc(CATS[it.cat].name.toLowerCase())} recalls</h2><div class="rows">${related.map((r) => `<a class="lrow" href="${url("/product/" + r.slug + "/")}"><span class="rank">${icon(r.level)}</span><span class="grow"><span class="ln">${esc(r.name)}</span><span class="lm">${esc(r.tagLabel)} · ${esc(r.firm)}</span></span><span class="badge ${r.level === "flag" ? "flag" : "caution"}">${esc(r.classification || "Recall")}</span></a>`).join("")}</div></section>` : ""}`;
@@ -363,7 +370,7 @@ function assets() {
   write("robots.txt", `User-agent: *\nAllow: /\nSitemap: ${abs("/sitemap.xml")}\n`);
 }
 function sitemap() {
-  const urls = ["/", "/recalls/", "/about/", "/methodology/"]
+  const urls = ["/", "/recalls/", "/about/", "/methodology/", "/privacy/"]
     .concat(Object.keys(CATS).map((k) => "/category/" + k + "/"))
     .concat(Object.keys(LISTS).map((s) => "/list/" + s + "/"))
     .concat(items.map((i) => "/product/" + i.slug + "/"));
@@ -406,6 +413,18 @@ staticPage("methodology", "Methodology & data sources", "Methodology & data",
    <h2>Accuracy &amp; limits</h2>
    <p>openFDA data is provided “as is,” can lag real time, and may contain errors — always confirm against the linked FDA record before acting. Absence from this database does <em>not</em> mean a product is safe or tested. This is informational only and not medical advice.</p>
    <div class="notice">Data snapshot built ${BUILD} · ${stats.total.toLocaleString()} records · source: openFDA food &amp; drug enforcement.</div>`);
+staticPage("privacy", "Privacy Policy", "Privacy Policy",
+  `<p>Last updated ${BUILD}. SupplementCheck is a free, informational site, and we keep data collection to a minimum.</p>
+   <h2>What we collect</h2>
+   <p>Browsing requires no account and no personal information. The only personal data we collect is your <strong>email address</strong> — and only if you choose to subscribe to recall alerts.</p>
+   <h2>Email alerts</h2>
+   <p>If you subscribe, your address is stored and emailed by our third-party email provider on our behalf, solely to send you new-recall alerts. Every email includes a one-click <strong>unsubscribe</strong> link, and you can opt out at any time. We never sell or share your email.</p>
+   <h2>Cookies &amp; advertising</h2>
+   <p>The site sets no advertising cookies today. If we add analytics or ads in future, we will update this page and request consent where required.</p>
+   <h2>Data sources</h2>
+   <p>Recall information is public-record data from the U.S. FDA via the openFDA API. We are an independent aggregator and are not affiliated with the FDA or NIH.</p>
+   <h2>Contact</h2>
+   <p>Questions about your data? Email <strong>[add your contact address]</strong>.</p>`);
 
 console.log("Built " + (items.length) + " product pages + " + Object.keys(CATS).length + " categories + " + Object.keys(LISTS).length + " lists.");
 console.log("Stats:", stats);
