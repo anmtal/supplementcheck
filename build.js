@@ -150,7 +150,8 @@ function head({ title, desc, pathname, jsonld, ogtype }) {
 <meta name="description" content="${esc(desc)}">
 <link rel="canonical" href="${esc(canonical)}">
 <meta name="robots" content="index,follow,max-image-preview:large">
-<meta name="theme-color" content="#0E6E63">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 <meta property="og:type" content="${ogtype || "website"}">
 <meta property="og:site_name" content="${CFG.name}">
 <meta property="og:title" content="${esc(title)}">
@@ -159,9 +160,6 @@ function head({ title, desc, pathname, jsonld, ogtype }) {
 <meta property="og:image" content="${abs("/assets/og.svg")}">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="${url("/assets/favicon.svg")}" type="image/svg+xml">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&family=Public+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="${url("/assets/style.css")}">
 ${jsonld ? `<script type="application/ld+json">${JSON.stringify(jsonld)}</script>` : ""}
 <script>window.SC_BASE=${JSON.stringify(BP)};</script>
@@ -177,7 +175,7 @@ ${jsonld ? `<script type="application/ld+json">${JSON.stringify(jsonld)}</script
   <a class="navlink" href="${url("/methodology/")}">Methodology</a>
   <button class="toggle" type="button" aria-label="Toggle dark mode">◐ Theme</button>
 </div></header>
-<main id="main"><div class="wrap">`;
+<main id="main">`;
 }
 function crumbs(arr) {
   return `<nav class="crumbs" aria-label="Breadcrumb">` +
@@ -188,7 +186,7 @@ function breadcrumbLD(arr) {
   return { "@type": "BreadcrumbList", itemListElement: arr.map((c, i) => ({ "@type": "ListItem", position: i + 1, name: c.name, item: abs(c.href || "/") })) };
 }
 function foot() {
-  return `</div></main>
+  return `</main>
 <footer><div class="wrap cols">
   <div>
     <a class="brand" href="${url("/")}" style="font-size:1rem">${LOGO}Supplement<b>Check</b></a>
@@ -210,7 +208,7 @@ function foot() {
 <script src="${url("/assets/app.js")}" defer></script>
 </body></html>`;
 }
-function page(opts, body) { return head(opts) + body + foot(); }
+function page(opts, body) { const inner = opts.full ? body : `<div class="wrap">${body}</div>`; return head(opts) + inner + foot(); }
 
 /* ---------------- write util ---------------- */
 function write(rel, content) {
@@ -224,39 +222,39 @@ function feedItem(it) {
   return `<li><a href="${url("/product/" + it.slug + "/")}"><span class="fname">${icon(it.level)} ${esc(it.name)}</span><span class="fmeta">${esc(it.tagLabel)} · ${esc(it.firm)} · ${esc(it.initiated.human)}</span></a></li>`;
 }
 function homePage() {
-  const recent = items.slice(0, 6).map(feedItem).join("");
+  const recent = listRows(items.slice(0, 6), false);
   const catCards = Object.keys(CATS).map((k) => `<a class="card" href="${url("/category/" + k + "/")}"><div class="cn">${CATS[k].emoji} ${byCat[k].length} recalls</div><div class="ct">${esc(CATS[k].name)}</div><div class="cd">${esc(CATS[k].blurb)}</div></a>`).join("");
   const jsonld = { "@context": "https://schema.org", "@graph": [
     { "@type": "Organization", name: CFG.name, url: abs("/"), logo: abs("/assets/favicon.svg") },
     { "@type": "WebSite", name: CFG.name, url: abs("/"), potentialAction: { "@type": "SearchAction", target: abs("/recalls/?q={search_term_string}"), "query-input": "required name=search_term_string" } }
   ] };
   const body = `
-<section class="hero"><div class="hero-grid">
-  <div>
-    <div class="eyebrow">Free FDA safety lookup</div>
-    <h1 class="h-xl serif">Is your supplement hiding something?</h1>
-    <p class="lede">Search <strong>${stats.total.toLocaleString()}</strong> official U.S. FDA supplement recalls — including <strong>${stats.hidden}</strong> caught with hidden drug ingredients. Free, in ten seconds.</p>
-    <div class="bigsearch"><input class="js-search" type="search" placeholder="Search a supplement or brand…" aria-label="Search supplements"><a class="btn" href="${url("/recalls/")}">Browse all</a></div>
-    <div class="trustline"><span class="dot"></span> <span class="mono">SOURCE: openFDA · FDA enforcement reports</span> · updated ${BUILD}</div>
-  </div>
-  <aside class="feed" aria-label="Recently flagged supplements"><h2><span class="pulse" aria-hidden="true"></span> Recently flagged</h2><ul>${recent}</ul></aside>
+<section class="hero"><div class="wrap">
+  <span class="eyebrow">Free FDA safety lookup</span>
+  <h1 class="h-xl serif">Is your supplement hiding something?</h1>
+  <p class="lede">Search <strong>${stats.total.toLocaleString()}</strong> official U.S. FDA supplement recalls — including <strong>${stats.hidden}</strong> caught with hidden drug ingredients. Free, in ten seconds.</p>
+  <div class="bigsearch"><input class="js-search" type="search" placeholder="Search a supplement or brand…" aria-label="Search supplements"><a class="btn" href="${url("/recalls/")}">Browse all</a></div>
+  <div class="trustline"><span class="dot"></span> <span class="mono">SOURCE: openFDA · FDA enforcement reports</span> · updated ${BUILD}</div>
 </div></section>
-<section>
-  <div class="eyebrow">Browse by category</div>
-  <h2 class="h-lg serif" style="margin:.4rem 0 1rem">Where the recalls cluster</h2>
+<section class="band alt"><div class="wrap">
+  <div class="sec-head"><span class="pulse" aria-hidden="true"></span> <span class="eyebrow">Recently flagged</span></div>
+  <div class="rows">${recent}</div>
+  <p style="margin-top:1.2rem"><a href="${url("/recalls/")}">See all ${stats.total.toLocaleString()} recalls ›</a></p>
+</div></section>
+<section class="band"><div class="wrap">
+  <span class="eyebrow">Browse by category</span>
+  <h2 class="h-lg serif" style="margin:.5rem 0 1.4rem">Where the recalls cluster</h2>
   <div class="grid g-3">${catCards}</div>
-</section>
-<section>
-  <div class="card" style="background:var(--primary-tint);border-color:transparent">
-    <div class="cn">Most-read lists</div>
-    <div class="grid g-3" style="margin-top:.7rem">
-      <a class="card" href="${url("/list/supplements-recalled-for-hidden-drug-ingredients/")}"><div class="ct">🔴 Hidden drug ingredients</div><div class="cd">${stats.hidden} supplements the FDA caught spiked with undeclared drugs.</div></a>
-      <a class="card" href="${url("/list/supplements-recalled-for-contamination/")}"><div class="ct">🧫 Contamination</div><div class="cd">Recalls for Salmonella, Listeria, mold and heavy metals.</div></a>
-      <a class="card" href="${url("/list/supplements-recalled-for-undeclared-allergens/")}"><div class="ct">⚠️ Undeclared allergens</div><div class="cd">Hidden milk, soy, egg, peanut and tree-nut recalls.</div></a>
-    </div>
+</div></section>
+<section class="band alt"><div class="wrap">
+  <h2 class="h-lg serif" style="margin-bottom:1.4rem">Most-read lists</h2>
+  <div class="grid g-3">
+    <a class="card" href="${url("/list/supplements-recalled-for-hidden-drug-ingredients/")}"><div class="ct">🔴 Hidden drug ingredients</div><div class="cd">${stats.hidden} supplements the FDA caught spiked with undeclared drugs.</div></a>
+    <a class="card" href="${url("/list/supplements-recalled-for-contamination/")}"><div class="ct">🧫 Contamination</div><div class="cd">Recalls for Salmonella, Listeria, mold and heavy metals.</div></a>
+    <a class="card" href="${url("/list/supplements-recalled-for-undeclared-allergens/")}"><div class="ct">⚠️ Undeclared allergens</div><div class="cd">Hidden milk, soy, egg, peanut and tree-nut recalls.</div></a>
   </div>
-</section>`;
-  write("index.html", page({ title: "SupplementCheck — Check any supplement’s FDA recall & safety record", desc: `Search ${stats.total.toLocaleString()} official FDA dietary-supplement recalls by product or brand — including ${stats.hidden} with hidden drug ingredients. Free and sourced.`, pathname: "/", jsonld }, body));
+</div></section>`;
+  write("index.html", page({ full: true, title: "SupplementCheck — Check any supplement’s FDA recall & safety record", desc: `Search ${stats.total.toLocaleString()} official FDA dietary-supplement recalls by product or brand — including ${stats.hidden} with hidden drug ingredients. Free and sourced.`, pathname: "/", jsonld }, body));
 }
 
 function productPage(it) {
